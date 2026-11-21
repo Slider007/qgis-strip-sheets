@@ -112,7 +112,10 @@ class SheetsAlgorithm(QgsProcessingAlgorithm):
 
         geoms = []
         for f in source.getFeatures():
-            if f.hasGeometry() and not f.geometry().isEmpty():
+            # только линии: точки и полигоны (через qgis_process или модель) давали
+            # пустой mergeLines и трассировку Python вместо понятной ошибки
+            if (f.hasGeometry() and not f.geometry().isEmpty()
+                    and f.geometry().type() == Qgis.GeometryType.Line):
                 geom = QgsGeometry(f.geometry())
                 if transform is not None:
                     geom.transform(transform)

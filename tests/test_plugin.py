@@ -157,6 +157,17 @@ class AlgorithmTest(unittest.TestCase):
         # по умолчанию А3×3 = 891×420, поле карты 866×410 мм, 1:2000 → 1732×820 м
         self.assertAlmostEqual(feats[0].geometry().area(), 1732 * 820, delta=1)
 
+    def test_points_layer_gives_clear_error(self):
+        """Точечный слой (qgis_process, модель) — понятная ошибка, а не трассировка Python."""
+        pts = QgsVectorLayer("Point?crs=EPSG:32637", "Точки", "memory")
+        feat = QgsFeature()
+        feat.setGeometry(QgsGeometry.fromPointXY(QgsPointXY(500000, 6000000)))
+        pts.dataProvider().addFeatures([feat])
+        with self.assertRaises(Exception) as err:
+            run(pts)
+        self.assertIn("нет линий", str(err.exception))
+        self.assertNotIn("Traceback", str(err.exception))
+
     def test_no_crs_rejected(self):
         with self.assertRaises(Exception) as err:
             run(line_layer([(37, 55), (37.1, 55.1)], ""))
