@@ -170,6 +170,26 @@ class AlgorithmTest(unittest.TestCase):
         self.assertIn("нет линий", str(err.exception))
         self.assertNotIn("Traceback", str(err.exception))
 
+    def test_compound_curve_z(self):
+        """Трасса из DWG/DXF — CompoundCurveZ (дуги, высоты), два куска встык: прежде mergeLines
+        давал пустую геометрию и core._fit падал на curveSubstring у None."""
+        lyr = QgsVectorLayer("CompoundCurveZ?crs=EPSG:32636", "Трасса DXF", "memory")
+        wkts = ["CompoundCurveZ((500000 6000000 10, 501500 6000300 12),"
+                " CircularStringZ(501500 6000300 12, 502500 6000900 15, 503500 6000300 11))",
+                "CompoundCurveZ((503500 6000300 11, 505000 6000000 9))"]
+        feats = []
+        for wkt in wkts:
+            feat = QgsFeature()
+            feat.setGeometry(QgsGeometry.fromWkt(wkt))
+            feats.append(feat)
+        lyr.dataProvider().addFeatures(feats)
+        out = list(run(lyr).getFeatures())
+        self.assertGreater(len(out), 1)
+        self.assertEqual(out[0]["from_m"], 0)
+        # куски слились в одну линию: счёт метров сплошной, до конца трассы
+        total = sum(f.geometry().length() for f in feats)
+        self.assertAlmostEqual(out[-1]["to_m"], total, delta=total * 0.01)
+
     def test_no_crs_rejected(self):
         with self.assertRaises(Exception) as err:
             run(line_layer([(37, 55), (37.1, 55.1)], ""))
