@@ -116,7 +116,12 @@ class SheetsAlgorithm(QgsProcessingAlgorithm):
             # пустой mergeLines и трассировку Python вместо понятной ошибки
             if (f.hasGeometry() and not f.geometry().isEmpty()
                     and f.geometry().type() == Qgis.GeometryType.Line):
-                geom = QgsGeometry(f.geometry())
+                # трасса из DWG/DXF — CompoundCurveZ: mergeLines сливает только 2D-ломаные,
+                # кривые и Z давали пустую геометрию
+                line = f.geometry().constGet().segmentize()
+                line.dropZValue()
+                line.dropMValue()
+                geom = QgsGeometry(line)
                 if transform is not None:
                     geom.transform(transform)
                 geoms.append(geom)
