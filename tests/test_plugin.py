@@ -35,16 +35,18 @@ from qgis.core import (  # noqa: E402
     QgsApplication,
     QgsFeature,
     QgsGeometry,
+    QgsLayout,
     QgsLayoutExporter,
     QgsLayoutObject,
     QgsPointXY,
     QgsPrintLayout,
+    QgsReport,
     QgsProject,
     QgsVectorLayer,
 )
 from qgis.gui import QgsMapCanvas  # noqa: E402
 from qgis.PyQt import sip  # noqa: E402
-from qgis.PyQt.QtCore import QObject, pyqtSignal  # noqa: E402
+from qgis.PyQt.QtCore import QEvent, QObject, pyqtSignal  # noqa: E402
 from qgis.PyQt.QtWidgets import QMainWindow, QMenu, QToolBar  # noqa: E402
 
 app = QgsApplication([], True, PROFILE)
@@ -477,8 +479,12 @@ class ButtonTest(unittest.TestCase):
         self.assertEqual(codes, {"78-ИЭИ"})
         self.assertIs(dlg.current_layout(), lay)
         self.assertEqual(lay.customProperty("моя правка"), 1)
-        # в форме 6 над графами «Изм.» ещё две строки
-        self.assertEqual(len([i for i in lay.items() if getattr(i, "id", lambda: "")().endswith("-верх")]), 7)
+        # штамп по ГОСТ Р 21.101 без лишнего: над формой 6 нет двух строк «-верх», графы заказчика нет ни в одной форме
+        ids = {getattr(i, "id", lambda: "")() for i in lay.items()}
+        self.assertFalse({i for i in ids if i.endswith("-верх") or "ЗАКАЗЧИК" in i})
+        self.assertIn("14", ids)
+        self.assertNotIn("customer", layout.STAMP)
+        self.assertNotIn("customer", dlg.stamp)
 
         # находка 3: набранный штамп не теряется, если закрыть окно без разбивки
         dlg.stamp["gip"].setText("Петров")
@@ -494,6 +500,9 @@ class ButtonTest(unittest.TestCase):
         other = Designer(QgsPrintLayout(project))
         iface.layoutDesignerOpened.emit(other)
         self.assertFalse(other.preview)
+        # у отчёта (QgsReport) и простого макета атласа нет — окно открывается без ошибки
+        for lay_other in (QgsReport(project), QgsLayout(project)):
+            iface.layoutDesignerOpened.emit(Designer(lay_other))
 
         pdf = os.path.join(OUT, "окно.pdf")
         dialog_module.QFileDialog.getSaveFileName = staticmethod(lambda *a, **k: (pdf[:-4], ""))
@@ -517,6 +526,8 @@ class ButtonTest(unittest.TestCase):
 
         plugin.unload()
         self.assertEqual(iface.menu, [])
+        # окно модуля удаляется отложенно: удалить сейчас, пока жива его родительская заглушка главного окна
+        QCoreApplication.sendPostedEvents(None, QEvent.Type.DeferredDelete)
 
 
 if __name__ == "__main__":

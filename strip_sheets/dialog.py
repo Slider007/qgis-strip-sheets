@@ -26,7 +26,7 @@ from . import core, layout
 TITLE = "Листы вдоль трассы"
 SCALES = ["500", "1000", "2000", "5000", "10000", "25000", "50000", "100000"]
 STAMP_FIELDS = [("code", "Обозначение"), ("object", "Объект"), ("title", "Наименование"),
-                ("stage", "Стадия"), ("customer", "Заказчик"),
+                ("stage", "Стадия"),
                 ("developer", "Разработал"), ("checker", "Проверил"), ("gip", "ГИП")]
 SCOPE = "strip_sheets"
 

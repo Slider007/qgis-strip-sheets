@@ -51,7 +51,7 @@ def windows():
         project.addMapLayer(sheets)
         layout.build(project, sheets, "A3", 3, 2000, True, {}, sheets.name())
         stamp = {"code": "01-26-ИГДИ", "object": "ВЛ 110 кВ (пример)", "title": "План трассы", "stage": "П",
-                 "customer": "Заказчик", "developer": "Иванов", "checker": "Петров", "gip": "Сидоров"}
+                 "developer": "Иванов", "checker": "Петров", "gip": "Сидоров"}
         for key, value in stamp.items():   # штамп хранится в проекте — окно берёт его оттуда
             project.writeEntry("strip_sheets", key, value)
         dlg = SheetsDialog(iface)
