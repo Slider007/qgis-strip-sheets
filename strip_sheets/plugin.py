@@ -46,7 +46,8 @@ class StripSheetsPlugin:
         from .layout import MARK
 
         lay = designer.layout()
-        if lay is not None and lay.customProperty(MARK) and lay.atlas().enabled():
+        if (lay is not None and hasattr(lay, "atlas")   # у отчета (QgsReport) атласа нет
+                and lay.customProperty(MARK) and lay.atlas().enabled()):
             designer.setAtlasPreviewEnabled(True)
 
     def unload(self):
